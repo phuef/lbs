@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Phils location-based app</title>
+  </head>
+  <body>
+    <h1>The current location of your device:</h1>
+    <p id="latitude"></p>
+    <p id="longitude"></p>
+    <button onclick="getLocation()">What's my location?</button>
+    <button onclick="restoreLocation()">Restore location</button>
+    <button onclick="monitorLocation()">Monitor location</button>
+    <button onclick="stopMonitoring()">Stop monitoring</button>
+
+    <script>
+      var id;
+      function saveLocation(latitude, longitude) {
+        localStorage.setItem("latitude", latitude);
+        localStorage.setItem("longitude", longitude);
+      }
+      function restoreLocation() {
+        var lat = document.getElementById("latitude");
+        var lon = document.getElementById("longitude");
+
+        lat.innerHTML = "Latitude: " + localStorage.getItem("latitude");
+        lon.innerHTML = "Longitude: " + localStorage.getItem("longitude");
+      }
+      function monitorLocation() {
+        id = navigator.geolocation.watchPosition(showPosition);
+      }
+      function stopMonitoring() {
+        navigator.geolocation.clearWatch(id);
+      }
+
+      function showPosition(position) {
+        console.log(position);
+        var lat = document.getElementById("latitude");
+        var lon = document.getElementById("longitude");
+        lat.innerHTML = "Latitude: " + position.coords.latitude;
+        lon.innerHTML = "Longitude: " + position.coords.longitude;
+        saveLocation(position.coords.latitude, position.coords.longitude);
+      }
+      function getLocation() {
+        navigator.geolocation.getCurrentPosition(showPosition);
+      }
+    </script>
+  </body>
+</html>
