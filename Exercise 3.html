@@ -4,14 +4,23 @@
     <title>Phils location-based app</title>
   </head>
   <body>
-    <h1>The current location of your device:</h1>
+    <h1 id="title" style="display:none">The current location of your device:</h1>
     <p id="latitude"></p>
     <p id="longitude"></p>
-    <button onclick="getLocation()">What's my location?</button>
-    <button onclick="restoreLocation()">Restore location</button>
-    <button onclick="monitorLocation()">Monitor location</button>
-    <button onclick="stopMonitoring()">Stop monitoring</button>
+    <dialog id="dialog" style="width:60%; height:80%; position:fixed; float:right" open>To use this website, we need to access your microphone. This will allow you to make voice commands. Don't worry, we won't use your microphone for anything else without your permission. Please click 'allow' when prompted to grant us access to your microphone. 
+    </br>
+      <button onclick="closeDialog()">I understand</button>
+    </dialog>
 
+    <div class="container" id="buttons" style="display:none">
+      <button onclick="getLocation()">What's my location?</button>
+      <button onclick="restoreLocation()">Restore location</button>
+      <button onclick="monitorLocation()">Monitor location</button>
+      <button onclick="stopMonitoring()">Stop monitoring</button>
+      <br>
+      following voice commands are possible:
+      "find me", "restore", "monitor" & "stop"
+    </div>
     <script>
       var id;
       function saveLocation(latitude, longitude) {
@@ -43,6 +52,40 @@
       function getLocation() {
         navigator.geolocation.getCurrentPosition(showPosition);
       }
+      function closeDialog(){
+        const dialog = document.getElementById("dialog");
+        const title = document.getElementById("title");
+        const buttons = document.getElementById("buttons");
+        dialog.open=false;
+        title.style.display="block"
+        buttons.style.display="block"
+      }
+      var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+      var recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.start();
+      recognition.onresult = function(event) {
+        console.log(event.results);
+          var command = event.results[0][0].transcript;
+          console.log(command);
+          if (command == 'find me') {
+            getLocation(); // function that returns user's current location
+        } else if(command == 'restore'){restoreLocation()}
+        else if(command == 'monitor'){monitorLocation()}
+        else if(command == 'stop'){stopMonitoring()}
+      }
+      recognition.onspeechend = function() {
+        console.log("The speaker just stopped.")
+    }
+    
     </script>
   </body>
+  <style>
+    .container {
+      display: grid;
+    }
+    button {
+      margin: 4px;
+    }
+  </style>
 </html>
