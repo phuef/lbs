@@ -7,8 +7,8 @@
     <h1 id="title" style="display:none">The current location of your device:</h1>
     <p id="latitude"></p>
     <p id="longitude"></p>
-    <dialog id="dialog" style="width:60%; height:80%; position:fixed; float:right" open>To use this website, we need to access your microphone. This will allow you to make voice commands. Don't worry, we won't use your microphone for anything else without your permission. Please click 'allow' when prompted to grant us access to your microphone. 
-    </br>
+    <dialog id="dialog" style="width:60%; height:80%; position:fixed; float:right" open>This website includes a voice recognition part, where you can input voice commands to activate functions. For that you need to give us access to your microphone. You don't need to activate it. Please click 'allow' when prompted to grant us access to your microphone, if you want to use the voice commands. 
+    <br>
       <button onclick="closeDialog()">I understand</button>
     </dialog>
 
@@ -18,14 +18,21 @@
       <button onclick="monitorLocation()">Monitor location</button>
       <button onclick="stopMonitoring()">Stop monitoring</button>
       <br>
+      Enable voice controls: <input type="checkbox" id="voice-control" onclick="toggleVoice()">
+      <br>
       following voice commands are possible:
       "find me", "restore", "monitor" & "stop"
+      <br>
+      <p id="placeLabel" style="display:none"><b>Your Location:</b></p>
+      <p id="place"></p>
+
     </div>
     <script>
       var id;
       function saveLocation(latitude, longitude) {
         localStorage.setItem("latitude", latitude);
         localStorage.setItem("longitude", longitude);
+        requestCoordinateTranslation(latitude, longitude)
       }
       function restoreLocation() {
         var lat = document.getElementById("latitude");
@@ -33,6 +40,8 @@
 
         lat.innerHTML = "Latitude: " + localStorage.getItem("latitude");
         lon.innerHTML = "Longitude: " + localStorage.getItem("longitude");
+        requestCoordinateTranslation(latitude, longitude)
+
       }
       function monitorLocation() {
         id = navigator.geolocation.watchPosition(showPosition);
@@ -63,7 +72,13 @@
       var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
       var recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
-      recognition.start();
+      recognition.continuos=true
+      function exitVoiceMode(){
+        document.getElementById("voice-control").checked=false; 
+        recognition.stop()
+        let instructions = new SpeechSynthesisUtterance("Goodbye.");
+        speechSynthesis.speak(instructions)
+      }
       recognition.onresult = function(event) {
         console.log(event.results);
           var command = event.results[0][0].transcript;
@@ -73,10 +88,43 @@
         } else if(command == 'restore'){restoreLocation()}
         else if(command == 'monitor'){monitorLocation()}
         else if(command == 'stop'){stopMonitoring()}
+        else if(command == 'exit'){exitVoiceMode()}
       }
       recognition.onspeechend = function() {
         console.log("The speaker just stopped.")
     }
+    function speakInstructions() {
+      var instructions = new SpeechSynthesisUtterance("Hello, you can give the following commands: Find me, restore, monitor, stop, exit.");
+      speechSynthesis.speak(instructions);
+  }
+    function toggleVoice() {
+      var checkBox = document.getElementById("voice-control");
+      if (checkBox.checked == true){
+          speakInstructions()
+          recognition.start();  
+      } else {
+        exitVoiceMode()
+      }
+    }
+    function requestCoordinateTranslation(latitude, longitude) {
+      var url = "https://nominatim.openstreetmap.org/reverse.php?" + "lat=" + latitude + "&lon=" + longitude + "&zoom=18&format=json";
+      var request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.onload = function() {
+          if (request.status >= 200 && request.status < 400) {
+              var data = JSON.parse(request.responseText);
+              console.log(data);
+              document.getElementById("place").innerHTML = data.display_name;
+              let instructions = new SpeechSynthesisUtterance("Your location is: " +data.display_name);
+              speechSynthesis.speak(instructions);
+              document.getElementById("placeLabel").style.display="block"
+          } 
+      };
+      request.send();
+  }
+  
+   
+  
     
     </script>
   </body>
