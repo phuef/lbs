@@ -1,4 +1,4 @@
-# lbs
+# About
 This repository is for the exercises in the course location based services 
 
 # Website
