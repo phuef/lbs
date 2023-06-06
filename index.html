@@ -2,17 +2,20 @@
 <html>
   <head>
     <title>Phils location-based app</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script defer src="main.js"></script>
   </head>
   <body>
-    <h1 id="title" style="display:none">The current location of your device:</h1>
+    <h1 id="title" style="display:block">The current location of your device:</h1>
     <p id="latitude"></p>
     <p id="longitude"></p>
-    <dialog id="dialog" style="width:60%; height:80%; position:fixed; float:right" open>This website includes a voice recognition part, where you can input voice commands to activate functions. For that you need to give access to your microphone. You don't need to activate it. Please click 'allow' when prompted to grant access to your microphone, if you want to use the voice commands. 
+    <dialog id="dialog" style="width:60%; height:80%; position:fixed; float:right">This website includes a voice recognition part, where you can input voice commands to activate functions. For that you need to give access to your microphone. You don't need to activate it. Please click 'allow' when prompted to grant access to your microphone, if you want to use the voice commands. 
     <br>
       <button onclick="closeDialog()">I understand</button>
     </dialog>
 
-    <div class="container" id="buttons" style="display:none">
+    <div class="container" id="buttons" style="display:block">
       <button onclick="getLocation()">What's my location?</button>
       <button onclick="restoreLocation()">Restore location</button>
       <button onclick="monitorLocation()">Monitor location</button>
@@ -25,108 +28,16 @@
       <br>
       <p id="placeLabel" style="display:none"><b>Your Location:</b></p>
       <p id="place"></p>
+      
+
 
     </div>
-    <script>
-      var id;
-      function saveLocation(latitude, longitude) {
-        localStorage.setItem("latitude", latitude);
-        localStorage.setItem("longitude", longitude);
-        requestCoordinateTranslation(latitude, longitude)
-      }
-      function restoreLocation() {
-        var lat = document.getElementById("latitude");
-        var lon = document.getElementById("longitude");
+    <div id="mapContainer" style="position:relative;height:300px;width:100%;border: 1px solid blue">
+      <div id="map" style="height: 300px;width:100%;position:absolute"></div>
+      <div id="mapOverview" style="height: 100px; width:100px;position:absolute;bottom:0;border: 0px solid red;z-index:9999; right:0"></div>
 
-        lat.innerHTML = "Latitude: " + localStorage.getItem("latitude");
-        lon.innerHTML = "Longitude: " + localStorage.getItem("longitude");
-        requestCoordinateTranslation(latitude, longitude)
-
-      }
-      function monitorLocation() {
-        id = navigator.geolocation.watchPosition(showPosition);
-      }
-      function stopMonitoring() {
-        navigator.geolocation.clearWatch(id);
-      }
-
-      function showPosition(position) {
-        console.log(position);
-        var lat = document.getElementById("latitude");
-        var lon = document.getElementById("longitude");
-        lat.innerHTML = "Latitude: " + position.coords.latitude;
-        lon.innerHTML = "Longitude: " + position.coords.longitude;
-        saveLocation(position.coords.latitude, position.coords.longitude);
-      }
-      function getLocation() {
-        navigator.geolocation.getCurrentPosition(showPosition);
-      }
-      function closeDialog(){
-        const dialog = document.getElementById("dialog");
-        const title = document.getElementById("title");
-        const buttons = document.getElementById("buttons");
-        dialog.open=false;
-        title.style.display="block"
-        buttons.style.display="block"
-      }
-      var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
-      var recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.continuos=true
-      function exitVoiceMode(){
-        document.getElementById("voice-control").checked=false; 
-        recognition.stop()
-        let instructions = new SpeechSynthesisUtterance("Goodbye.");
-        speechSynthesis.speak(instructions)
-      }
-      recognition.onresult = function(event) {
-        console.log(event.results);
-          var command = event.results[0][0].transcript;
-          console.log(command);
-          if (command == 'find me') {
-            getLocation(); // function that returns user's current location
-        } else if(command == 'restore'){restoreLocation()}
-        else if(command == 'monitor'){monitorLocation()}
-        else if(command == 'stop'){stopMonitoring()}
-        else if(command == 'exit'){exitVoiceMode()}
-      }
-      recognition.onspeechend = function() {
-        console.log("The speaker just stopped.")
-    }
-    function speakInstructions() {
-      var instructions = new SpeechSynthesisUtterance("Hello, you can give the following commands: Find me, restore, monitor, stop, exit.");
-      speechSynthesis.speak(instructions);
-  }
-    function toggleVoice() {
-      var checkBox = document.getElementById("voice-control");
-      if (checkBox.checked == true){
-          speakInstructions()
-          recognition.start();  
-      } else {
-        exitVoiceMode()
-      }
-    }
-    function requestCoordinateTranslation(latitude, longitude) {
-      var url = "https://nominatim.openstreetmap.org/reverse.php?" + "lat=" + latitude + "&lon=" + longitude + "&zoom=18&format=json";
-      var request = new XMLHttpRequest();
-      request.open('GET', url, true);
-      request.onload = function() {
-          if (request.status >= 200 && request.status < 400) {
-              var data = JSON.parse(request.responseText);
-              console.log(data);
-              document.getElementById("place").innerHTML = data.display_name;
-              let instructions = new SpeechSynthesisUtterance("Your location is: " +data.display_name);
-              speechSynthesis.speak(instructions);
-              document.getElementById("placeLabel").style.display="block"
-          } 
-      };
-      request.send();
-  }
-  
-   
-  
+    </div>  
     
-    </script>
   </body>
   <style>
     .container {
